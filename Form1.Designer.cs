@@ -545,6 +545,8 @@ namespace ZMC
             this.Controls.Add(this.statusStrip1);
             this.Name = "Form1";
             this.Text = "ZMC 运动控制器";
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.Load += new System.EventHandler(this.Form1_Load);
             this.grpConnect.ResumeLayout(false);
             this.grpConnect.PerformLayout();
