@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -Command \"& 'C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe' 'D:\\\\Project\\\\.Net\\\\ZMC\\\\ZMC.sln' /p:Configuration=Debug /nologo /v:minimal 2>&1\" 2>&1)",
+      "Bash(powershell.exe -Command \"Select-String -Path 'D:\\\\Project\\\\.Net\\\\ZMC\\\\Form1.cs' -Pattern 'UpdateButtonStates|toolStripStatusLabel1' | ForEach-Object { \\\\$_.LineNumber.ToString\\(\\) + ': ' + \\\\$_.Line.Trim\\(\\) }\")",
+      "Bash(powershell.exe -Command \"& 'C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe' 'D:\\\\Project\\\\.Net\\\\ZMC\\\\ZMC.sln' /p:Configuration=Debug /nologo /v:minimal 2>&1\")"
+    ]
+  }
+}

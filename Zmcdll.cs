@@ -120,5 +120,16 @@ namespace ZMC
         {
             return ZAux_Direct_SetDpos(Handle, axis, value);
         }
+
+        // 查询轴是否空闲（1=停止，0=运动中）
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_GetIfIdle(IntPtr handle, int axis, ref int value);
+
+        public int GetIfIdle(int axis)
+        {
+            int v = 0;
+            ZAux_Direct_GetIfIdle(Handle, axis, ref v);
+            return v;
+        }
     }
 }

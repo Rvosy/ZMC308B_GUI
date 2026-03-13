@@ -29,8 +29,10 @@ namespace ZMC
             }
             else
             {
-                lblStatus.Text = "已连接 " + ip;
+                lblStatus.Text = "已连接 ";
                 timer1.Start();
+                UpdateButtonStates(true);
+                toolStripStatusLabel1.Text = "就绪";
             }
         }
         // 断开
@@ -52,6 +54,8 @@ namespace ZMC
             else
             {
                 lblStatus.Text = "未连接";
+                UpdateButtonStates(false);
+                toolStripStatusLabel1.Text = "就绪";
                 MessageBox.Show("已断开连接");
             }
         }
@@ -162,6 +166,7 @@ namespace ZMC
                 }
 
                 lblStatus.Text = "运动中...";
+                toolStripStatusLabel1.Text = "运动中...";
             }
             catch (Exception ex)
             {
@@ -185,6 +190,7 @@ namespace ZMC
                 if (ret == 0)
                 {
                     lblStatus.Text = "已急停";
+                    toolStripStatusLabel1.Text = "已急停";
                     MessageBox.Show("已执行急停操作", "急停", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
@@ -254,6 +260,24 @@ namespace ZMC
 
                 // 读取 X 轴位置
                 txtX.Text = zmcControl.GetDpos(3).ToString("F3");
+
+                // 读取各轴运动状态
+                bool allIdle = true;
+                TextBox[] stateBoxes = { txtStateZ1, txtStateZ2, txtStateZ3, txtStateX };
+                for (int axis = 0; axis <= 3; axis++)
+                {
+                    bool idle = zmcControl.GetIfIdle(axis) != 0;
+                    stateBoxes[axis].Text = idle ? "停止" : "运动中";
+                    if (!idle) allIdle = false;
+                }
+
+                // 所有轴停止后自动复位状态栏
+                string sl = toolStripStatusLabel1.Text;
+                if (allIdle && (sl == "运动中..." || sl == "清零中..."))
+                {
+                    toolStripStatusLabel1.Text = "就绪";
+                    lblStatus.Text = "已连接 ";
+                }
             }
             catch (Exception ex)
             {
@@ -261,9 +285,19 @@ namespace ZMC
             }
         }
 
+        private void UpdateButtonStates(bool connected)
+        {
+            btnRun.Enabled = connected;
+            btnStop.Enabled = connected;
+            btnZero.Enabled = connected;
+            btnSetZero.Enabled = connected;
+            btnClose.Enabled = connected;
+            btnOpen.Enabled = !connected;
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            UpdateButtonStates(false);
         }
         // 重置（归零到机械原点）
         private void btnZero_Click(object sender, EventArgs e)
@@ -315,6 +349,7 @@ namespace ZMC
                 }
 
                 lblStatus.Text = "清零中...";
+                toolStripStatusLabel1.Text = "清零中...";
                 MessageBox.Show("已开始清零操作，所有轴将移动到0位置", "清零",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -347,6 +382,7 @@ namespace ZMC
                 }
 
                 lblStatus.Text = "已设为零点";
+                toolStripStatusLabel1.Text = "已设为零点";
                 MessageBox.Show("所有轴当前位置已设为零点", "设为零点",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
