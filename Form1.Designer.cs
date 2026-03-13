@@ -33,6 +33,7 @@
             this.lblStatus = new System.Windows.Forms.Label();
             this.btnOpen = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
+            this.btnScan = new System.Windows.Forms.Button();
             this.btnRun = new System.Windows.Forms.Button();
             this.btnStop = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
@@ -47,7 +48,7 @@
             this.txtZ3 = new System.Windows.Forms.TextBox();
             this.txtZ1 = new System.Windows.Forms.TextBox();
             this.txtX = new System.Windows.Forms.TextBox();
-            this.txtIp = new System.Windows.Forms.TextBox();
+            this.txtIp = new System.Windows.Forms.ComboBox();
             this.labelUnits = new System.Windows.Forms.Label();
             this.labelSpeed = new System.Windows.Forms.Label();
             this.labelAccel = new System.Windows.Forms.Label();
@@ -58,6 +59,10 @@
             this.lblz2 = new System.Windows.Forms.Label();
             this.lblz3 = new System.Windows.Forms.Label();
             this.lblx = new System.Windows.Forms.Label();
+            this.rdoRelative = new System.Windows.Forms.RadioButton();
+            this.rdoAbsolute = new System.Windows.Forms.RadioButton();
+            this.btnZero = new System.Windows.Forms.Button();
+            this.btnSetZero = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txtUnits
@@ -66,7 +71,7 @@
             this.txtUnits.Name = "txtUnits";
             this.txtUnits.Size = new System.Drawing.Size(56, 21);
             this.txtUnits.TabIndex = 0;
-            this.txtUnits.Text = "100";
+            this.txtUnits.Text = "1000";
             // 
             // lblStatus
             // 
@@ -97,6 +102,16 @@
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
+            // btnScan
+            // 
+            this.btnScan.Location = new System.Drawing.Point(304, 8);
+            this.btnScan.Name = "btnScan";
+            this.btnScan.Size = new System.Drawing.Size(81, 25);
+            this.btnScan.TabIndex = 29;
+            this.btnScan.Text = "扫描";
+            this.btnScan.UseVisualStyleBackColor = true;
+            this.btnScan.Click += new System.EventHandler(this.btnScan_Click);
+            // 
             // btnRun
             // 
             this.btnRun.Location = new System.Drawing.Point(150, 170);
@@ -105,6 +120,7 @@
             this.btnRun.TabIndex = 15;
             this.btnRun.Text = "启动";
             this.btnRun.UseVisualStyleBackColor = true;
+            this.btnRun.Click += new System.EventHandler(this.btnRun_Click);
             // 
             // btnStop
             // 
@@ -150,6 +166,7 @@
             this.txtEndZ1.Name = "txtEndZ1";
             this.txtEndZ1.Size = new System.Drawing.Size(70, 21);
             this.txtEndZ1.TabIndex = 20;
+            this.txtEndZ1.Text = "0";
             this.txtEndZ1.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // txtEndZ2
@@ -158,6 +175,7 @@
             this.txtEndZ2.Name = "txtEndZ2";
             this.txtEndZ2.Size = new System.Drawing.Size(70, 21);
             this.txtEndZ2.TabIndex = 21;
+            this.txtEndZ2.Text = "0";
             this.txtEndZ2.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // txtEndZ3
@@ -166,6 +184,7 @@
             this.txtEndZ3.Name = "txtEndZ3";
             this.txtEndZ3.Size = new System.Drawing.Size(70, 21);
             this.txtEndZ3.TabIndex = 22;
+            this.txtEndZ3.Text = "0";
             this.txtEndZ3.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // txtEndX
@@ -174,6 +193,8 @@
             this.txtEndX.Name = "txtEndX";
             this.txtEndX.Size = new System.Drawing.Size(70, 21);
             this.txtEndX.TabIndex = 23;
+            this.txtEndX.Text = "0";
+            this.txtEndX.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // txtZ2
             // 
@@ -213,11 +234,12 @@
             // 
             // txtIp
             // 
+            this.txtIp.FormattingEnabled = true;
             this.txtIp.Location = new System.Drawing.Point(12, 12);
             this.txtIp.Name = "txtIp";
-            this.txtIp.Size = new System.Drawing.Size(88, 21);
+            this.txtIp.Size = new System.Drawing.Size(100, 20);
             this.txtIp.TabIndex = 28;
-            this.txtIp.Text = "192.168.5.200";
+            this.txtIp.Text = "127.0.0.1";
             // 
             // labelUnits
             // 
@@ -309,6 +331,48 @@
             this.lblx.TabIndex = 38;
             this.lblx.Text = "x";
             // 
+            // rdoRelative
+            // 
+            this.rdoRelative.Location = new System.Drawing.Point(12, 145);
+            this.rdoRelative.Name = "rdoRelative";
+            this.rdoRelative.Size = new System.Drawing.Size(78, 16);
+            this.rdoRelative.TabIndex = 30;
+            this.rdoRelative.Text = "相对运动";
+            this.rdoRelative.UseVisualStyleBackColor = true;
+            this.rdoRelative.CheckedChanged += new System.EventHandler(this.rdoRelative_CheckedChanged);
+            // 
+            // rdoAbsolute
+            // 
+            this.rdoAbsolute.Checked = true;
+            this.rdoAbsolute.Location = new System.Drawing.Point(119, 145);
+            this.rdoAbsolute.Name = "rdoAbsolute";
+            this.rdoAbsolute.Size = new System.Drawing.Size(73, 16);
+            this.rdoAbsolute.TabIndex = 31;
+            this.rdoAbsolute.TabStop = true;
+            this.rdoAbsolute.Text = "绝对运动";
+            this.rdoAbsolute.UseVisualStyleBackColor = true;
+            this.rdoAbsolute.CheckedChanged += new System.EventHandler(this.rdoAbsolute_CheckedChanged);
+            //
+            // btnZero
+            //
+            this.btnZero.Location = new System.Drawing.Point(240, 170);
+            this.btnZero.Name = "btnZero";
+            this.btnZero.Size = new System.Drawing.Size(75, 45);
+            this.btnZero.TabIndex = 32;
+            this.btnZero.Text = "重置";
+            this.btnZero.UseVisualStyleBackColor = true;
+            this.btnZero.Click += new System.EventHandler(this.btnZero_Click);
+            //
+            // btnSetZero
+            //
+            this.btnSetZero.Location = new System.Drawing.Point(320, 170);
+            this.btnSetZero.Name = "btnSetZero";
+            this.btnSetZero.Size = new System.Drawing.Size(80, 45);
+            this.btnSetZero.TabIndex = 33;
+            this.btnSetZero.Text = "设为零点";
+            this.btnSetZero.UseVisualStyleBackColor = true;
+            this.btnSetZero.Click += new System.EventHandler(this.btnSetZero_Click);
+            //
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -324,6 +388,8 @@
             this.Controls.Add(this.labelAccel);
             this.Controls.Add(this.labelSpeed);
             this.Controls.Add(this.labelUnits);
+            this.Controls.Add(this.rdoAbsolute);
+            this.Controls.Add(this.rdoRelative);
             this.Controls.Add(this.txtIp);
             this.Controls.Add(this.txtX);
             this.Controls.Add(this.txtZ1);
@@ -337,7 +403,10 @@
             this.Controls.Add(this.txtAccel);
             this.Controls.Add(this.txtSpeed);
             this.Controls.Add(this.btnStop);
+            this.Controls.Add(this.btnZero);
+            this.Controls.Add(this.btnSetZero);
             this.Controls.Add(this.btnRun);
+            this.Controls.Add(this.btnScan);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.btnOpen);
             this.Controls.Add(this.lblStatus);
@@ -356,8 +425,11 @@
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.Button btnOpen;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.Button btnScan;
         private System.Windows.Forms.Button btnRun;
         private System.Windows.Forms.Button btnStop;
+        private System.Windows.Forms.Button btnZero;
+        private System.Windows.Forms.Button btnSetZero;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.TextBox txtSpeed;
         private System.Windows.Forms.TextBox txtAccel;
@@ -370,7 +442,7 @@
         private System.Windows.Forms.TextBox txtZ3;
         private System.Windows.Forms.TextBox txtZ1;
         private System.Windows.Forms.TextBox txtX;
-        private System.Windows.Forms.TextBox txtIp;
+        private System.Windows.Forms.ComboBox txtIp;
         private System.Windows.Forms.Label labelUnits;
         private System.Windows.Forms.Label labelSpeed;
         private System.Windows.Forms.Label labelAccel;
@@ -381,6 +453,9 @@
         private System.Windows.Forms.Label lblz2;
         private System.Windows.Forms.Label lblz3;
         private System.Windows.Forms.Label lblx;
+        private System.Windows.Forms.RadioButton rdoRelative;
+        private System.Windows.Forms.RadioButton rdoAbsolute;
+        private bool isAbsoluteMode = true; // 默认绝对运动模式
     }
 }
 

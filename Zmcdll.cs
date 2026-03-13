@@ -37,5 +37,88 @@ namespace ZMC
             ZAux_SearchEthlist(sb, 10240, timeoutMs);
             return sb.ToString();
         }
+
+        // 读取绝对位置
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_GetDpos(IntPtr handle, int axis, ref float dpos);
+
+        public float GetDpos(int axis)
+        {
+            float dpos = 0;
+            ZAux_Direct_GetDpos(Handle, axis, ref dpos);
+            return dpos;
+        }
+
+        // 设置脉冲当量
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_SetUnits(IntPtr handle, int axis, float units);
+
+        public int SetUnits(int axis, float units)
+        {
+            return ZAux_Direct_SetUnits(Handle, axis, units);
+        }
+
+        // 设置速度
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_SetSpeed(IntPtr handle, int axis, float speed);
+
+        public int SetSpeed(int axis, float speed)
+        {
+            return ZAux_Direct_SetSpeed(Handle, axis, speed);
+        }
+
+        // 设置加速度
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_SetAccel(IntPtr handle, int axis, float accel);
+
+        public int SetAccel(int axis, float accel)
+        {
+            return ZAux_Direct_SetAccel(Handle, axis, accel);
+        }
+
+        // 设置减速度
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_SetDecel(IntPtr handle, int axis, float decel);
+
+        public int SetDecel(int axis, float decel)
+        {
+            return ZAux_Direct_SetDecel(Handle, axis, decel);
+        }
+
+        // 单轴相对运动
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_Single_Move(IntPtr handle, int axis, float distance);
+
+        public int SingleMoveRel(int axis, float distance)
+        {
+            return ZAux_Direct_Single_Move(Handle, axis, distance);
+        }
+
+        // 单轴绝对定位运动
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_Single_MoveAbs(IntPtr handle, int axis, float distance);
+
+        public int SingleMoveAbs(int axis, float distance)
+        {
+            return ZAux_Direct_Single_MoveAbs(Handle, axis, distance);
+        }
+
+        // 急停
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_Rapidstop(IntPtr handle, int mode);
+
+        public int Rapidstop(int mode)
+        {
+            return ZAux_Direct_Rapidstop(Handle, mode);
+        }
+
+        // 设置绝对位置（设为零点时传入0）
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_SetDpos(IntPtr handle, int axis, float value);
+
+        public int SetDpos(int axis, float value)
+        {
+            return ZAux_Direct_SetDpos(Handle, axis, value);
+        }
     }
 }
