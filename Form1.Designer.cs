@@ -35,6 +35,8 @@ namespace ZMC
             this.btnClose = new System.Windows.Forms.Button();
             this.btnScan = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
             this.grpAxis = new System.Windows.Forms.GroupBox();
             this.lblz1 = new System.Windows.Forms.Label();
             this.lblz2 = new System.Windows.Forms.Label();
@@ -55,9 +57,9 @@ namespace ZMC
             this.txtStateZ2 = new System.Windows.Forms.TextBox();
             this.txtStateZ3 = new System.Windows.Forms.TextBox();
             this.txtStateX = new System.Windows.Forms.TextBox();
-            this.rdoAbsolute = new System.Windows.Forms.RadioButton();
-            this.rdoRelative = new System.Windows.Forms.RadioButton();
             this.grpParams = new System.Windows.Forms.GroupBox();
+            this.rdoRelative = new System.Windows.Forms.RadioButton();
+            this.rdoAbsolute = new System.Windows.Forms.RadioButton();
             this.labelUnits = new System.Windows.Forms.Label();
             this.txtUnits = new System.Windows.Forms.TextBox();
             this.labelSpeed = new System.Windows.Forms.Label();
@@ -71,10 +73,13 @@ namespace ZMC
             this.btnStop = new System.Windows.Forms.Button();
             this.btnZero = new System.Windows.Forms.Button();
             this.btnSetZero = new System.Windows.Forms.Button();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.grpConnect.SuspendLayout();
+            this.tabControl1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
             this.grpAxis.SuspendLayout();
             this.grpParams.SuspendLayout();
             this.grpControl.SuspendLayout();
@@ -143,6 +148,29 @@ namespace ZMC
             this.lblStatus.TabIndex = 4;
             this.lblStatus.Text = "未连接";
             // 
+            // tabControl1
+            // 
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Location = new System.Drawing.Point(8, 62);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(484, 325);
+            this.tabControl1.TabIndex = 1;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Controls.Add(this.grpAxis);
+            this.tabPage1.Controls.Add(this.grpParams);
+            this.tabPage1.Controls.Add(this.grpControl);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(476, 299);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "运动控制";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
             // grpAxis
             // 
             this.grpAxis.Controls.Add(this.lblz1);
@@ -164,9 +192,9 @@ namespace ZMC
             this.grpAxis.Controls.Add(this.txtStateZ2);
             this.grpAxis.Controls.Add(this.txtStateZ3);
             this.grpAxis.Controls.Add(this.txtStateX);
-            this.grpAxis.Location = new System.Drawing.Point(8, 62);
+            this.grpAxis.Location = new System.Drawing.Point(4, 16);
             this.grpAxis.Name = "grpAxis";
-            this.grpAxis.Size = new System.Drawing.Size(484, 114);
+            this.grpAxis.Size = new System.Drawing.Size(466, 114);
             this.grpAxis.TabIndex = 1;
             this.grpAxis.TabStop = false;
             this.grpAxis.Text = "轴位置";
@@ -201,7 +229,7 @@ namespace ZMC
             // lblx
             // 
             this.lblx.AutoSize = true;
-            this.lblx.Location = new System.Drawing.Point(407, 14);
+            this.lblx.Location = new System.Drawing.Point(395, 14);
             this.lblx.Name = "lblx";
             this.lblx.Size = new System.Drawing.Size(23, 12);
             this.lblx.TabIndex = 3;
@@ -248,7 +276,7 @@ namespace ZMC
             // 
             // txtX
             // 
-            this.txtX.Location = new System.Drawing.Point(377, 28);
+            this.txtX.Location = new System.Drawing.Point(370, 28);
             this.txtX.Name = "txtX";
             this.txtX.ReadOnly = true;
             this.txtX.Size = new System.Drawing.Size(80, 21);
@@ -294,7 +322,7 @@ namespace ZMC
             // 
             // txtEndX
             // 
-            this.txtEndX.Location = new System.Drawing.Point(377, 54);
+            this.txtEndX.Location = new System.Drawing.Point(370, 54);
             this.txtEndX.Name = "txtEndX";
             this.txtEndX.Size = new System.Drawing.Size(80, 21);
             this.txtEndX.TabIndex = 13;
@@ -342,35 +370,13 @@ namespace ZMC
             // 
             // txtStateX
             // 
-            this.txtStateX.Location = new System.Drawing.Point(377, 80);
+            this.txtStateX.Location = new System.Drawing.Point(370, 80);
             this.txtStateX.Name = "txtStateX";
             this.txtStateX.ReadOnly = true;
             this.txtStateX.Size = new System.Drawing.Size(80, 21);
             this.txtStateX.TabIndex = 18;
             this.txtStateX.Text = "停止";
             this.txtStateX.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // rdoAbsolute
-            // 
-            this.rdoAbsolute.Checked = true;
-            this.rdoAbsolute.Location = new System.Drawing.Point(154, 23);
-            this.rdoAbsolute.Name = "rdoAbsolute";
-            this.rdoAbsolute.Size = new System.Drawing.Size(85, 16);
-            this.rdoAbsolute.TabIndex = 0;
-            this.rdoAbsolute.TabStop = true;
-            this.rdoAbsolute.Text = "绝对运动";
-            this.rdoAbsolute.UseVisualStyleBackColor = true;
-            this.rdoAbsolute.CheckedChanged += new System.EventHandler(this.rdoAbsolute_CheckedChanged);
-            // 
-            // rdoRelative
-            // 
-            this.rdoRelative.Location = new System.Drawing.Point(154, 49);
-            this.rdoRelative.Name = "rdoRelative";
-            this.rdoRelative.Size = new System.Drawing.Size(85, 16);
-            this.rdoRelative.TabIndex = 1;
-            this.rdoRelative.Text = "相对运动";
-            this.rdoRelative.UseVisualStyleBackColor = true;
-            this.rdoRelative.CheckedChanged += new System.EventHandler(this.rdoRelative_CheckedChanged);
             // 
             // grpParams
             // 
@@ -384,12 +390,34 @@ namespace ZMC
             this.grpParams.Controls.Add(this.txtAccel);
             this.grpParams.Controls.Add(this.labelDecel);
             this.grpParams.Controls.Add(this.txtDecel);
-            this.grpParams.Location = new System.Drawing.Point(8, 182);
+            this.grpParams.Location = new System.Drawing.Point(4, 148);
             this.grpParams.Name = "grpParams";
             this.grpParams.Size = new System.Drawing.Size(245, 135);
             this.grpParams.TabIndex = 3;
             this.grpParams.TabStop = false;
             this.grpParams.Text = "运动参数";
+            // 
+            // rdoRelative
+            // 
+            this.rdoRelative.Location = new System.Drawing.Point(154, 49);
+            this.rdoRelative.Name = "rdoRelative";
+            this.rdoRelative.Size = new System.Drawing.Size(85, 16);
+            this.rdoRelative.TabIndex = 1;
+            this.rdoRelative.Text = "相对运动";
+            this.rdoRelative.UseVisualStyleBackColor = true;
+            this.rdoRelative.CheckedChanged += new System.EventHandler(this.rdoRelative_CheckedChanged);
+            // 
+            // rdoAbsolute
+            // 
+            this.rdoAbsolute.Checked = true;
+            this.rdoAbsolute.Location = new System.Drawing.Point(154, 23);
+            this.rdoAbsolute.Name = "rdoAbsolute";
+            this.rdoAbsolute.Size = new System.Drawing.Size(85, 16);
+            this.rdoAbsolute.TabIndex = 0;
+            this.rdoAbsolute.TabStop = true;
+            this.rdoAbsolute.Text = "绝对运动";
+            this.rdoAbsolute.UseVisualStyleBackColor = true;
+            this.rdoAbsolute.CheckedChanged += new System.EventHandler(this.rdoAbsolute_CheckedChanged);
             // 
             // labelUnits
             // 
@@ -465,9 +493,9 @@ namespace ZMC
             this.grpControl.Controls.Add(this.btnStop);
             this.grpControl.Controls.Add(this.btnZero);
             this.grpControl.Controls.Add(this.btnSetZero);
-            this.grpControl.Location = new System.Drawing.Point(258, 182);
+            this.grpControl.Location = new System.Drawing.Point(255, 148);
             this.grpControl.Name = "grpControl";
-            this.grpControl.Size = new System.Drawing.Size(234, 135);
+            this.grpControl.Size = new System.Drawing.Size(215, 135);
             this.grpControl.TabIndex = 4;
             this.grpControl.TabStop = false;
             this.grpControl.Text = "控制";
@@ -476,7 +504,7 @@ namespace ZMC
             // 
             this.btnRun.Location = new System.Drawing.Point(8, 20);
             this.btnRun.Name = "btnRun";
-            this.btnRun.Size = new System.Drawing.Size(100, 45);
+            this.btnRun.Size = new System.Drawing.Size(92, 45);
             this.btnRun.TabIndex = 0;
             this.btnRun.Text = "启动";
             this.btnRun.UseVisualStyleBackColor = true;
@@ -484,9 +512,9 @@ namespace ZMC
             // 
             // btnStop
             // 
-            this.btnStop.Location = new System.Drawing.Point(118, 20);
+            this.btnStop.Location = new System.Drawing.Point(110, 20);
             this.btnStop.Name = "btnStop";
-            this.btnStop.Size = new System.Drawing.Size(100, 45);
+            this.btnStop.Size = new System.Drawing.Size(92, 45);
             this.btnStop.TabIndex = 1;
             this.btnStop.Text = "停止";
             this.btnStop.UseVisualStyleBackColor = true;
@@ -496,7 +524,7 @@ namespace ZMC
             // 
             this.btnZero.Location = new System.Drawing.Point(8, 78);
             this.btnZero.Name = "btnZero";
-            this.btnZero.Size = new System.Drawing.Size(100, 45);
+            this.btnZero.Size = new System.Drawing.Size(92, 45);
             this.btnZero.TabIndex = 2;
             this.btnZero.Text = "重置";
             this.btnZero.UseVisualStyleBackColor = true;
@@ -504,19 +532,29 @@ namespace ZMC
             // 
             // btnSetZero
             // 
-            this.btnSetZero.Location = new System.Drawing.Point(118, 78);
+            this.btnSetZero.Location = new System.Drawing.Point(110, 78);
             this.btnSetZero.Name = "btnSetZero";
-            this.btnSetZero.Size = new System.Drawing.Size(100, 45);
+            this.btnSetZero.Size = new System.Drawing.Size(92, 45);
             this.btnSetZero.TabIndex = 3;
             this.btnSetZero.Text = "设为零点";
             this.btnSetZero.UseVisualStyleBackColor = true;
             this.btnSetZero.Click += new System.EventHandler(this.btnSetZero_Click);
             // 
+            // tabPage2
+            // 
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(476, 299);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "IO调试";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 329);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 394);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(500, 22);
             this.statusStrip1.TabIndex = 5;
@@ -537,19 +575,19 @@ namespace ZMC
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(500, 351);
+            this.ClientSize = new System.Drawing.Size(500, 416);
             this.Controls.Add(this.grpConnect);
-            this.Controls.Add(this.grpAxis);
-            this.Controls.Add(this.grpParams);
-            this.Controls.Add(this.grpControl);
+            this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.statusStrip1);
-            this.Name = "Form1";
-            this.Text = "ZMC 运动控制器";
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
+            this.Name = "Form1";
+            this.Text = "ZMC 运动控制器";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.grpConnect.ResumeLayout(false);
             this.grpConnect.PerformLayout();
+            this.tabControl1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
             this.grpAxis.ResumeLayout(false);
             this.grpAxis.PerformLayout();
             this.grpParams.ResumeLayout(false);
@@ -568,6 +606,9 @@ namespace ZMC
         private System.Windows.Forms.GroupBox grpAxis;
         private System.Windows.Forms.GroupBox grpParams;
         private System.Windows.Forms.GroupBox grpControl;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.TextBox txtUnits;

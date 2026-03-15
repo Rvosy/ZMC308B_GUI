@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace ZMC
@@ -6,6 +7,11 @@ namespace ZMC
     public partial class Form1 : Form
     {
         ZmcDll zmcControl = new ZmcDll();
+
+        // IO 调试 Tab 控件
+        private Label[]  _inLeds   = new Label[40];
+        private Button[] _outBtns  = new Button[16];
+        private uint[]   _outState = new uint[16];
 
         public Form1()
         {
@@ -278,6 +284,28 @@ namespace ZMC
                     toolStripStatusLabel1.Text = "就绪";
                     lblStatus.Text = "已连接 ";
                 }
+
+                // IO 状态轮询（仅当 IO调试 Tab 可见时刷新，减少总线负担）
+                if (tabControl1.SelectedTab == tabPage2)
+                {
+                    for (int i = 0; i < 40; i++)
+                    {
+                        uint raw = zmcControl.GetIn(i);
+                        // NPN反相：raw=0 对应 25V（高电平），显示为 1/绿色
+                        uint disp = raw == 0 ? 1u : 0u;
+                        _inLeds[i].Text      = "IN" + i + "\n" + disp;
+                        _inLeds[i].BackColor = disp != 0 ? Color.LimeGreen : Color.LightGray;
+                    }
+                    for (int i = 0; i < 16; i++)
+                    {
+                        uint raw = zmcControl.GetOp(i);
+                        _outState[i] = raw;
+                        // NPN反相：raw=1 对应 0V（输出导通），显示为 1/橙色
+                        uint disp = raw == 0 ? 1u : 0u;
+                        _outBtns[i].Text      = "OUT" + i + "\n" + disp;
+                        _outBtns[i].BackColor = disp != 0 ? Color.Orange : SystemColors.Control;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -298,6 +326,80 @@ namespace ZMC
         private void Form1_Load(object sender, EventArgs e)
         {
             UpdateButtonStates(false);
+            InitIoTab();
+        }
+
+        private void InitIoTab()
+        {
+            // --- 数字输入 GroupBox（IN0~IN39，8列×5行）---
+            const int cols = 8;
+            const int cellW = 54, cellH = 26, cellMargin = 2;
+            const int grpPadLeft = 8, grpPadTop = 22;
+
+            var grpIn = new GroupBox
+            {
+                Text     = "数字输入 IN0~IN39",
+                Location = new Point(4, 4),
+                Size     = new Size(462, grpPadTop + 5 * (cellH + cellMargin) + 6)
+            };
+
+            for (int i = 0; i < 40; i++)
+            {
+                int col = i % cols;
+                int row = i / cols;
+                var lbl = new Label
+                {
+                    Text      = "IN" + i + "\n0",
+                    Tag       = i,
+                    Size      = new Size(cellW, cellH),
+                    Location  = new Point(grpPadLeft + col * (cellW + cellMargin),
+                                          grpPadTop  + row * (cellH + cellMargin)),
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    BackColor = Color.LightGray,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    Font      = new Font("Courier New", 7f)
+                };
+                _inLeds[i] = lbl;
+                grpIn.Controls.Add(lbl);
+            }
+
+            // --- 数字输出 GroupBox（OUT0~OUT15，8列×2行）---
+            const int btnW = 54, btnH = 30;
+            int grpInBottom = grpIn.Bottom;
+
+            var grpOut = new GroupBox
+            {
+                Text     = "数字输出 OUT0~OUT15",
+                Location = new Point(4, grpInBottom + 4),
+                Size     = new Size(462, grpPadTop + 2 * (btnH + cellMargin) + 8)
+            };
+
+            for (int i = 0; i < 16; i++)
+            {
+                int col = i % cols;
+                int row = i / cols;
+                int idx = i; // capture for lambda
+                var btn = new Button
+                {
+                    Text     = "OUT" + i + "\n0",
+                    Tag      = idx,
+                    Size     = new Size(btnW, btnH),
+                    Location = new Point(grpPadLeft + col * (btnW + cellMargin),
+                                         grpPadTop  + row * (btnH + cellMargin)),
+                    Font     = new Font("Courier New", 7f)
+                };
+                btn.Click += (s, e) =>
+                {
+                    if (!zmcControl.IsConnected) return;
+                    uint newVal = _outState[idx] != 0 ? 0u : 1u;
+                    zmcControl.SetOp(idx, newVal);
+                };
+                _outBtns[i] = btn;
+                grpOut.Controls.Add(btn);
+            }
+
+            tabPage2.Controls.Add(grpIn);
+            tabPage2.Controls.Add(grpOut);
         }
         // 重置（归零到机械原点）
         private void btnZero_Click(object sender, EventArgs e)

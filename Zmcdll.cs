@@ -131,5 +131,21 @@ namespace ZMC
             ZAux_Direct_GetIfIdle(Handle, axis, ref v);
             return v;
         }
+
+        // 读取单个数字输入口状态
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_GetIn(IntPtr handle, int ionum, ref uint piValue);
+
+        // 设置单个数字输出口状态（0=关，1=开）
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_SetOp(IntPtr handle, int ionum, uint iValue);
+
+        // 读取单个数字输出口状态
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_GetOp(IntPtr handle, int ionum, ref uint piValue);
+
+        public uint GetIn(int ioNum) { uint v = 0; ZAux_Direct_GetIn(Handle, ioNum, ref v); return v; }
+        public int SetOp(int ioNum, uint value) => ZAux_Direct_SetOp(Handle, ioNum, value);
+        public uint GetOp(int ioNum) { uint v = 0; ZAux_Direct_GetOp(Handle, ioNum, ref v); return v; }
     }
 }
