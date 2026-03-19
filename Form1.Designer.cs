@@ -434,7 +434,7 @@ namespace ZMC
             this.txtUnits.Name = "txtUnits";
             this.txtUnits.Size = new System.Drawing.Size(60, 21);
             this.txtUnits.TabIndex = 1;
-            this.txtUnits.Text = "1000";
+            this.txtUnits.Text = "89";
             // 
             // labelSpeed
             // 
@@ -451,7 +451,7 @@ namespace ZMC
             this.txtSpeed.Name = "txtSpeed";
             this.txtSpeed.Size = new System.Drawing.Size(60, 21);
             this.txtSpeed.TabIndex = 3;
-            this.txtSpeed.Text = "100";
+            this.txtSpeed.Text = "1000";
             // 
             // labelAccel
             // 

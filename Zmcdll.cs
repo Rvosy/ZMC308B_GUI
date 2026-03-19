@@ -49,6 +49,13 @@ namespace ZMC
             return dpos;
         }
 
+        // 返回 DLL 错误码（非零表示通信异常），用于检测设备意外断线
+        public int TryGetDpos(int axis, out float dpos)
+        {
+            dpos = 0;
+            return ZAux_Direct_GetDpos(Handle, axis, ref dpos);
+        }
+
         // 设置脉冲当量
         [DllImport("zauxdll.dll")]
         private static extern int ZAux_Direct_SetUnits(IntPtr handle, int axis, float units);

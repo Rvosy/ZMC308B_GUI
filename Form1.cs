@@ -50,20 +50,13 @@ namespace ZMC
                 return;
             }
 
-            timer1.Stop();
-            int ret = zmcControl.Close();
+            int ret = zmcControl.Close(); // 始终将 Handle 置零，无论硬件是否响应
+            SetDisconnectedUI();
             if (ret != 0)
-            {
-                lblStatus.Text = "断开失败";
-                MessageBox.Show("断开失败，错误码：" + ret);
-            }
+                MessageBox.Show($"设备通信断开失败（错误码：{ret}），已强制重置连接状态。", "断开连接",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
             else
-            {
-                lblStatus.Text = "未连接";
-                UpdateButtonStates(false);
-                toolStripStatusLabel1.Text = "就绪";
-                MessageBox.Show("已断开连接");
-            }
+                MessageBox.Show("已断开连接", "断开连接", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         // 相对运动选中
         private void rdoRelative_CheckedChanged(object sender, EventArgs e)
@@ -243,73 +236,108 @@ namespace ZMC
             }
         }
 
-        // 定时器刷新状态
+        // 定时器刷新状态：立即停止计时器，将 DLL 调用放到后台线程，避免网络超时时卡死 UI
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (!zmcControl.IsConnected)
-            {
-                lblStatus.Text = "未连接";
-                timer1.Stop();
-                return;
-            }
+            timer1.Stop();
+            if (!zmcControl.IsConnected) { SetDisconnectedUI(); return; }
 
+            bool doIo = tabControl1.SelectedTab == tabPage2; // 在 UI 线程读取控件状态
+
+            System.Threading.Tasks.Task.Run(() => PollDevice(doIo));
+        }
+
+        private void PollDevice(bool doIo)
+        {
             try
             {
-                // 读取 Z1 轴位置
-                txtZ1.Text = zmcControl.GetDpos(0).ToString("F3");
+                float z1, z2, z3, x;
+                int ret = zmcControl.TryGetDpos(0, out z1);
+                if (ret != 0)
+                {
+                    if (IsDisposed || !IsHandleCreated) return;
+                    BeginInvoke(new Action(() =>
+                    {
+                        zmcControl.Handle = IntPtr.Zero;
+                        SetDisconnectedUI("设备已断开连接");
+                        MessageBox.Show($"设备通信异常（错误码：{ret}），连接已断开。", "连接中断",
+                                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }));
+                    return;
+                }
+                z2 = zmcControl.GetDpos(1);
+                z3 = zmcControl.GetDpos(2);
+                x  = zmcControl.GetDpos(3);
 
-                // 读取 Z2 轴位置
-                txtZ2.Text = zmcControl.GetDpos(1).ToString("F3");
-
-                // 读取 Z3 轴位置
-                txtZ3.Text = zmcControl.GetDpos(2).ToString("F3");
-
-                // 读取 X 轴位置
-                txtX.Text = zmcControl.GetDpos(3).ToString("F3");
-
-                // 读取各轴运动状态
-                bool allIdle = true;
-                TextBox[] stateBoxes = { txtStateZ1, txtStateZ2, txtStateZ3, txtStateX };
+                bool[] idles = new bool[4];
                 for (int axis = 0; axis <= 3; axis++)
+                    idles[axis] = zmcControl.GetIfIdle(axis) != 0;
+
+                uint[] ins  = null;
+                uint[] ops  = null;
+                if (doIo)
                 {
-                    bool idle = zmcControl.GetIfIdle(axis) != 0;
-                    stateBoxes[axis].Text = idle ? "停止" : "运动中";
-                    if (!idle) allIdle = false;
+                    ins = new uint[40];
+                    ops = new uint[16];
+                    for (int i = 0; i < 40; i++) ins[i] = zmcControl.GetIn(i);
+                    for (int i = 0; i < 16; i++) ops[i] = zmcControl.GetOp(i);
                 }
 
-                // 所有轴停止后自动复位状态栏
-                string sl = toolStripStatusLabel1.Text;
-                if (allIdle && (sl == "运动中..." || sl == "清零中..."))
+                if (IsDisposed || !IsHandleCreated) return;
+                BeginInvoke(new Action(() =>
                 {
-                    toolStripStatusLabel1.Text = "就绪";
-                    lblStatus.Text = "已连接 ";
-                }
+                    if (!zmcControl.IsConnected) { SetDisconnectedUI(); return; }
 
-                // IO 状态轮询（仅当 IO调试 Tab 可见时刷新，减少总线负担）
-                if (tabControl1.SelectedTab == tabPage2)
-                {
-                    for (int i = 0; i < 40; i++)
+                    txtZ1.Text = z1.ToString("F3");
+                    txtZ2.Text = z2.ToString("F3");
+                    txtZ3.Text = z3.ToString("F3");
+                    txtX.Text  = x.ToString("F3");
+
+                    bool allIdle = true;
+                    TextBox[] stateBoxes = { txtStateZ1, txtStateZ2, txtStateZ3, txtStateX };
+                    for (int axis = 0; axis <= 3; axis++)
                     {
-                        uint raw = zmcControl.GetIn(i);
-                        // NPN反相：raw=0 对应 25V（高电平），显示为 1/绿色
-                        uint disp = raw == 0 ? 1u : 0u;
-                        _inLeds[i].Text      = "IN" + i + "\n" + disp;
-                        _inLeds[i].BackColor = disp != 0 ? Color.LimeGreen : Color.LightGray;
+                        stateBoxes[axis].Text = idles[axis] ? "停止" : "运动中";
+                        if (!idles[axis]) allIdle = false;
                     }
-                    for (int i = 0; i < 16; i++)
+
+                    string sl = toolStripStatusLabel1.Text;
+                    if (allIdle && (sl == "运动中..." || sl == "清零中..."))
                     {
-                        uint raw = zmcControl.GetOp(i);
-                        _outState[i] = raw;
-                        // NPN反相：raw=1 对应 0V（输出导通），显示为 1/橙色
-                        uint disp = raw == 0 ? 1u : 0u;
-                        _outBtns[i].Text      = "OUT" + i + "\n" + disp;
-                        _outBtns[i].BackColor = disp != 0 ? Color.Orange : SystemColors.Control;
+                        toolStripStatusLabel1.Text = "就绪";
+                        lblStatus.Text = "已连接 ";
                     }
-                }
+
+                    if (doIo && ins != null)
+                    {
+                        for (int i = 0; i < 40; i++)
+                        {
+                            uint disp = ins[i] == 0 ? 1u : 0u;
+                            _inLeds[i].Text      = "IN" + i + "\n" + disp;
+                            _inLeds[i].BackColor = disp != 0 ? Color.LimeGreen : Color.LightGray;
+                        }
+                        for (int i = 0; i < 16; i++)
+                        {
+                            _outState[i] = ops[i];
+                            uint disp = ops[i] == 0 ? 1u : 0u;
+                            _outBtns[i].Text      = "OUT" + i + "\n" + disp;
+                            _outBtns[i].BackColor = disp != 0 ? Color.Orange : SystemColors.Control;
+                        }
+                    }
+
+                    timer1.Start(); // 本次轮询完成后重启计时器
+                }));
             }
             catch (Exception ex)
             {
-                lblStatus.Text = "读取状态异常: " + ex.Message;
+                if (IsDisposed || !IsHandleCreated) return;
+                BeginInvoke(new Action(() =>
+                {
+                    zmcControl.Handle = IntPtr.Zero;
+                    SetDisconnectedUI("设备已断开连接");
+                    MessageBox.Show("设备通信异常，已自动断开连接：" + ex.Message, "连接错误",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }));
             }
         }
 
@@ -321,6 +349,14 @@ namespace ZMC
             btnSetZero.Enabled = connected;
             btnClose.Enabled = connected;
             btnOpen.Enabled = !connected;
+        }
+
+        private void SetDisconnectedUI(string statusMessage = "未连接")
+        {
+            timer1.Stop();
+            lblStatus.Text = statusMessage;
+            toolStripStatusLabel1.Text = "就绪";
+            UpdateButtonStates(false);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -467,6 +503,17 @@ namespace ZMC
             {
                 MessageBox.Show("未连接设备", "设为零点", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
+            }
+
+            // 确保所有轴已停止，防止运动中修改坐标系
+            for (int axis = 0; axis <= 3; axis++)
+            {
+                if (zmcControl.GetIfIdle(axis) == 0)
+                {
+                    MessageBox.Show("有电机正在运动，请等待所有轴停止后再设为零点。", "设为零点",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
             }
 
             try
