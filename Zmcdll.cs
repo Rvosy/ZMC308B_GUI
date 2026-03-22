@@ -154,5 +154,11 @@ namespace ZMC
         public uint GetIn(int ioNum) { uint v = 0; ZAux_Direct_GetIn(Handle, ioNum, ref v); return v; }
         public int SetOp(int ioNum, uint value) => ZAux_Direct_SetOp(Handle, ioNum, value);
         public uint GetOp(int ioNum) { uint v = 0; ZAux_Direct_GetOp(Handle, ioNum, ref v); return v; }
+
+        // 单轴速度模式运动（连续运动直到停止命令）
+        [DllImport("zauxdll.dll")]
+        private static extern int ZAux_Direct_Single_Vmove(IntPtr handle, int axis, int direction);
+
+        public int SingleVmove(int axis, int dir) => ZAux_Direct_Single_Vmove(Handle, axis, dir);
     }
 }

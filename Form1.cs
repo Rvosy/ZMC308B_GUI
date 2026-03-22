@@ -13,6 +13,15 @@ namespace ZMC
         private Button[] _outBtns  = new Button[16];
         private uint[]   _outState = new uint[16];
 
+        // 限位控制
+        private const float SoftLimitMax   = 400f;
+        private const int   HomeLimitInput = 0;    // 零点限位 IN0
+        private bool  isHoming             = false;
+        private bool  _homingWaitIdle      = false; // 等待轴停止后再归零坐标
+        private bool  _prevLimitHit        = false;
+        private Label  lblHomeLimitStatus;
+        private Button btnHome;
+
         public Form1()
         {
             InitializeComponent();
@@ -127,6 +136,24 @@ namespace ZMC
                 float endZ2 = float.Parse(txtEndZ2.Text);
                 float endZ3 = float.Parse(txtEndZ3.Text);
                 float endX = float.Parse(txtEndX.Text);
+
+                // 软限位校验
+                float[] targets = new float[4];
+                if (isAbsoluteMode)
+                {
+                    targets[0] = endZ1; targets[1] = endZ2;
+                    targets[2] = endZ3; targets[3] = endX;
+                }
+                else
+                {
+                    targets[0] = zmcControl.GetDpos(0) + endZ1;
+                    targets[1] = zmcControl.GetDpos(1) + endZ2;
+                    targets[2] = zmcControl.GetDpos(2) + endZ3;
+                    targets[3] = zmcControl.GetDpos(3) + endX;
+                }
+                string[] axisNames = { "Z1", "Z2", "Z3", "X" };
+                for (int i = 0; i < 4; i++)
+                    if (!CheckSoftLimit(targets[i], axisNames[i])) return;
 
                 // 单轴运动：Z1 轴
                 if (txtEndZ1.Text.Length > 0)
@@ -273,6 +300,8 @@ namespace ZMC
                 for (int axis = 0; axis <= 3; axis++)
                     idles[axis] = zmcControl.GetIfIdle(axis) != 0;
 
+                uint in0State = zmcControl.GetIn(HomeLimitInput);
+
                 uint[] ins  = null;
                 uint[] ops  = null;
                 if (doIo)
@@ -305,6 +334,32 @@ namespace ZMC
                     if (allIdle && (sl == "运动中..." || sl == "清零中..."))
                     {
                         toolStripStatusLabel1.Text = "就绪";
+                        lblStatus.Text = "已连接 ";
+                    }
+
+                    // IN0 限位状态显示（低电平触发，GetIn 返回 1 表示被拉低/触发）
+                    bool limitHit = (in0State != 0);
+                    lblHomeLimitStatus.Text      = "IN0: " + (limitHit ? "触发" : "正常");
+                    lblHomeLimitStatus.BackColor = limitHit
+                        ? System.Drawing.Color.OrangeRed
+                        : System.Drawing.Color.LimeGreen;
+
+                    // 回零：限位上升沿 → 急停，进入等待轴停止状态
+                    if (isHoming && limitHit && !_prevLimitHit)
+                    {
+                        zmcControl.Rapidstop(2);
+                        _homingWaitIdle = true;
+                        isHoming = false;
+                    }
+                    _prevLimitHit = limitHit;
+
+                    // 等待 Z1 轴完全停止后再执行设为零点
+                    if (_homingWaitIdle && idles[0])
+                    {
+                        zmcControl.SetDpos(0, 0f);
+                        _homingWaitIdle = false;
+                        btnHome.Enabled = true;
+                        toolStripStatusLabel1.Text = "回零完成";
                         lblStatus.Text = "已连接 ";
                     }
 
@@ -349,6 +404,7 @@ namespace ZMC
             btnSetZero.Enabled = connected;
             btnClose.Enabled = connected;
             btnOpen.Enabled = !connected;
+            if (btnHome != null) btnHome.Enabled = connected && !isHoming;
         }
 
         private void SetDisconnectedUI(string statusMessage = "未连接")
@@ -356,6 +412,14 @@ namespace ZMC
             timer1.Stop();
             lblStatus.Text = statusMessage;
             toolStripStatusLabel1.Text = "就绪";
+            isHoming = false;
+            _homingWaitIdle = false;
+            _prevLimitHit = false;
+            if (lblHomeLimitStatus != null)
+            {
+                lblHomeLimitStatus.Text = "IN0: ---";
+                lblHomeLimitStatus.BackColor = System.Drawing.Color.LightGray;
+            }
             UpdateButtonStates(false);
         }
 
@@ -363,6 +427,7 @@ namespace ZMC
         {
             UpdateButtonStates(false);
             InitIoTab();
+            InitLimitControls();
         }
 
         private void InitIoTab()
@@ -496,6 +561,104 @@ namespace ZMC
                 MessageBox.Show("清零失败: " + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        private void InitLimitControls()
+        {
+            tabControl1.Height += 56;
+            statusStrip1.Top   += 56;
+            this.ClientSize = new System.Drawing.Size(ClientSize.Width, ClientSize.Height + 56);
+
+            var grpLimit = new System.Windows.Forms.GroupBox
+            {
+                Text     = "限位控制",
+                Location = new System.Drawing.Point(4, 287),
+                Size     = new System.Drawing.Size(466, 52)
+            };
+
+            lblHomeLimitStatus = new System.Windows.Forms.Label
+            {
+                Text        = "IN0: ---",
+                Location    = new System.Drawing.Point(8, 18),
+                Size        = new System.Drawing.Size(100, 24),
+                TextAlign   = System.Drawing.ContentAlignment.MiddleCenter,
+                BackColor   = System.Drawing.Color.LightGray,
+                BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            };
+
+            var lblSoftLimit = new System.Windows.Forms.Label
+            {
+                Text      = "软限位: 0 ~ 400",
+                Location  = new System.Drawing.Point(118, 20),
+                Size      = new System.Drawing.Size(120, 20),
+                TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            };
+
+            btnHome = new System.Windows.Forms.Button
+            {
+                Text     = "回零",
+                Location = new System.Drawing.Point(362, 14),
+                Size     = new System.Drawing.Size(92, 30),
+                Enabled  = false
+            };
+            btnHome.Click += btnHome_Click;
+
+            grpLimit.Controls.Add(lblHomeLimitStatus);
+            grpLimit.Controls.Add(lblSoftLimit);
+            grpLimit.Controls.Add(btnHome);
+            tabPage1.Controls.Add(grpLimit);
+        }
+
+        private bool CheckSoftLimit(float targetPos, string axisName)
+        {
+            if (targetPos < 0 || targetPos > SoftLimitMax)
+            {
+                MessageBox.Show(
+                    $"{axisName}轴目标位置 {targetPos:F3} 超出软限位范围 (0 ~ {SoftLimitMax})",
+                    "软限位触发", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            return true;
+        }
+
+        private void btnHome_Click(object sender, EventArgs e)
+        {
+            if (!zmcControl.IsConnected)
+            {
+                MessageBox.Show("未连接设备", "回零", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 如果 IN0 当前已触发，直接将 Z1 坐标置零，无需运动
+            if (zmcControl.GetIn(HomeLimitInput) != 0)
+            {
+                zmcControl.SetDpos(0, 0f);
+                toolStripStatusLabel1.Text = "回零完成（已在零点）";
+                return;
+            }
+
+            try
+            {
+                float homingSpeed = Math.Max(5f, Math.Min(100f, float.Parse(txtSpeed.Text) / 10f));
+                zmcControl.SetUnits(0, float.Parse(txtUnits.Text));
+                zmcControl.SetSpeed(0, homingSpeed);
+                zmcControl.SetAccel(0, float.Parse(txtAccel.Text));
+                zmcControl.SetDecel(0, float.Parse(txtDecel.Text));
+
+                isHoming = true;
+                btnHome.Enabled = false;
+                toolStripStatusLabel1.Text = "回零中...";
+                lblStatus.Text = "回零中...";
+
+                zmcControl.SingleVmove(0, -1); // -1=负方向连续运动
+            }
+            catch (Exception ex)
+            {
+                isHoming = false;
+                btnHome.Enabled = true;
+                MessageBox.Show("回零启动失败: " + ex.Message, "错误",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         // 设为零点（类似电子秤去皮功能）
         private void btnSetZero_Click(object sender, EventArgs e)
         {
