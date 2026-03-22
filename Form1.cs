@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using ZMC.Lib;
 
 namespace ZMC
 {
     public partial class Form1 : Form
     {
-        ZmcDll zmcControl = new ZmcDll();
+        ZmcDevice zmcControl = new ZmcDevice();
+        private bool isAbsoluteMode = true; // 默认绝对运动模式
 
         // IO 调试 Tab 控件
         private Label[]  _inLeds   = new Label[40];
@@ -67,29 +69,41 @@ namespace ZMC
             else
                 MessageBox.Show("已断开连接", "断开连接", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-        // 相对运动选中
-        private void rdoRelative_CheckedChanged(object sender, EventArgs e)
+        // 运动模式切换（绝对/相对）
+        private void rdoRelative_CheckedChanged(object sender, EventArgs e) => UpdateMotionMode();
+        private void rdoAbsolute_CheckedChanged(object sender, EventArgs e) => UpdateMotionMode();
+
+        private void UpdateMotionMode()
         {
-            isAbsoluteMode = false;
-            lblendpos.Text = "移动增量";
-            // 清空终点位置输入框，避免模式切换混淆
-            txtEndZ1.Text = "0";
-            txtEndZ2.Text = "0";
-            txtEndZ3.Text = "0";
-            txtEndX.Text = "0";
+            isAbsoluteMode = rdoAbsolute.Checked;
+            lblendpos.Text = isAbsoluteMode ? "终点位置" : "移动增量";
+            txtEndZ1.Text = txtEndZ2.Text = txtEndZ3.Text = txtEndX.Text = "0";
+        }
+        // 公共辅助：解析 UI 参数并应用到所有轴
+        private void ApplyMotionParams()
+        {
+            float units = float.Parse(txtUnits.Text);
+            float speed = float.Parse(txtSpeed.Text);
+            float accel = float.Parse(txtAccel.Text);
+            float decel = float.Parse(txtDecel.Text);
+            for (int axis = 0; axis <= 3; axis++)
+            {
+                zmcControl.SetUnits(axis, units);
+                zmcControl.SetSpeed(axis, speed);
+                zmcControl.SetAccel(axis, accel);
+                zmcControl.SetDecel(axis, decel);
+            }
         }
 
-        // 绝对运动选中
-        private void rdoAbsolute_CheckedChanged(object sender, EventArgs e)
+        // 公共辅助：按当前模式执行单轴运动
+        private void MoveAxis(int axis, float target)
         {
-            isAbsoluteMode = true;
-            lblendpos.Text = "终点位置";
-            // 清空终点位置输入框，避免模式切换混淆
-            txtEndZ1.Text = "0";
-            txtEndZ2.Text = "0";
-            txtEndZ3.Text = "0";
-            txtEndX.Text = "0";
+            if (isAbsoluteMode)
+                zmcControl.SingleMoveAbs(axis, target);
+            else
+                zmcControl.SingleMove(axis, target);
         }
+
         // 启动
         private void btnRun_Click(object sender, EventArgs e)
         {
@@ -101,94 +115,28 @@ namespace ZMC
 
             try
             {
-                // 解析运动参数
-                float units = float.Parse(txtUnits.Text);
-                float speed = float.Parse(txtSpeed.Text);
-                float accel = float.Parse(txtAccel.Text);
-                float decel = float.Parse(txtDecel.Text);
-
-                // 设置 Z1 轴参数（轴号0）
-                zmcControl.SetUnits(0, units);
-                zmcControl.SetSpeed(0, speed);
-                zmcControl.SetAccel(0, accel);
-                zmcControl.SetDecel(0, decel);
-
-                // 设置 Z2 轴参数（轴号1）
-                zmcControl.SetUnits(1, units);
-                zmcControl.SetSpeed(1, speed);
-                zmcControl.SetAccel(1, accel);
-                zmcControl.SetDecel(1, decel);
-
-                // 设置 Z3 轴参数（轴号2）
-                zmcControl.SetUnits(2, units);
-                zmcControl.SetSpeed(2, speed);
-                zmcControl.SetAccel(2, accel);
-                zmcControl.SetDecel(2, decel);
-
-                // 设置 X 轴参数（轴号3）
-                zmcControl.SetUnits(3, units);
-                zmcControl.SetSpeed(3, speed);
-                zmcControl.SetAccel(3, accel);
-                zmcControl.SetDecel(3, decel);
+                ApplyMotionParams();
 
                 // 读取终点位置
-                float endZ1 = float.Parse(txtEndZ1.Text);
-                float endZ2 = float.Parse(txtEndZ2.Text);
-                float endZ3 = float.Parse(txtEndZ3.Text);
-                float endX = float.Parse(txtEndX.Text);
+                float[] ends = {
+                    float.Parse(txtEndZ1.Text), float.Parse(txtEndZ2.Text),
+                    float.Parse(txtEndZ3.Text), float.Parse(txtEndX.Text)
+                };
+                TextBox[] endBoxes = { txtEndZ1, txtEndZ2, txtEndZ3, txtEndX };
+                string[] axisNames = { "Z1", "Z2", "Z3", "X" };
 
                 // 软限位校验
-                float[] targets = new float[4];
-                if (isAbsoluteMode)
-                {
-                    targets[0] = endZ1; targets[1] = endZ2;
-                    targets[2] = endZ3; targets[3] = endX;
-                }
-                else
-                {
-                    targets[0] = zmcControl.GetDpos(0) + endZ1;
-                    targets[1] = zmcControl.GetDpos(1) + endZ2;
-                    targets[2] = zmcControl.GetDpos(2) + endZ3;
-                    targets[3] = zmcControl.GetDpos(3) + endX;
-                }
-                string[] axisNames = { "Z1", "Z2", "Z3", "X" };
                 for (int i = 0; i < 4; i++)
-                    if (!CheckSoftLimit(targets[i], axisNames[i])) return;
-
-                // 单轴运动：Z1 轴
-                if (txtEndZ1.Text.Length > 0)
                 {
-                    if (isAbsoluteMode)
-                        zmcControl.SingleMoveAbs(0, endZ1);
-                    else
-                        zmcControl.SingleMoveRel(0, endZ1);
+                    float target = isAbsoluteMode ? ends[i] : zmcControl.GetDpos(i) + ends[i];
+                    if (!CheckSoftLimit(target, axisNames[i])) return;
                 }
 
-                // 单轴运动：Z2 轴
-                if (txtEndZ2.Text.Length > 0)
+                // 执行运动
+                for (int i = 0; i < 4; i++)
                 {
-                    if (isAbsoluteMode)
-                        zmcControl.SingleMoveAbs(1, endZ2);
-                    else
-                        zmcControl.SingleMoveRel(1, endZ2);
-                }
-
-                // 单轴运动：Z3 轴
-                if (txtEndZ3.Text.Length > 0)
-                {
-                    if (isAbsoluteMode)
-                        zmcControl.SingleMoveAbs(2, endZ3);
-                    else
-                        zmcControl.SingleMoveRel(2, endZ3);
-                }
-
-                // 单轴运动：X 轴
-                if (txtEndX.Text.Length > 0)
-                {
-                    if (isAbsoluteMode)
-                        zmcControl.SingleMoveAbs(3, endX);
-                    else
-                        zmcControl.SingleMoveRel(3, endX);
+                    if (endBoxes[i].Text.Length > 0)
+                        MoveAxis(i, ends[i]);
                 }
 
                 lblStatus.Text = "运动中...";
@@ -279,13 +227,13 @@ namespace ZMC
             try
             {
                 float z1, z2, z3, x;
-                int ret = zmcControl.TryGetDpos(0, out z1);
+                int ret = zmcControl.GetDpos(0, out z1);
                 if (ret != 0)
                 {
                     if (IsDisposed || !IsHandleCreated) return;
                     BeginInvoke(new Action(() =>
                     {
-                        zmcControl.Handle = IntPtr.Zero;
+                        zmcControl.Disconnect();
                         SetDisconnectedUI("设备已断开连接");
                         MessageBox.Show($"设备通信异常（错误码：{ret}），连接已断开。", "连接中断",
                                         MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -385,14 +333,19 @@ namespace ZMC
             }
             catch (Exception ex)
             {
-                if (IsDisposed || !IsHandleCreated) return;
-                BeginInvoke(new Action(() =>
+                try
                 {
-                    zmcControl.Handle = IntPtr.Zero;
-                    SetDisconnectedUI("设备已断开连接");
-                    MessageBox.Show("设备通信异常，已自动断开连接：" + ex.Message, "连接错误",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }));
+                    if (IsDisposed || !IsHandleCreated) return;
+                    BeginInvoke(new Action(() =>
+                    {
+                        zmcControl.Disconnect();
+                        SetDisconnectedUI("设备已断开连接");
+                        MessageBox.Show("设备通信异常，已自动断开连接：" + ex.Message, "连接错误",
+                                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }));
+                }
+                catch (ObjectDisposedException) { }
+                catch (InvalidOperationException) { }
             }
         }
 
@@ -513,42 +466,14 @@ namespace ZMC
 
             try
             {
-                // 解析运动参数
-                float units = float.Parse(txtUnits.Text);
-                float speed = float.Parse(txtSpeed.Text);
-                float accel = float.Parse(txtAccel.Text);
-                float decel = float.Parse(txtDecel.Text);
+                ApplyMotionParams();
 
-                // 为所有轴设置运动参数
                 for (int axis = 0; axis <= 3; axis++)
                 {
-                    zmcControl.SetUnits(axis, units);
-                    zmcControl.SetSpeed(axis, speed);
-                    zmcControl.SetAccel(axis, accel);
-                    zmcControl.SetDecel(axis, decel);
-                }
-
-                // 根据运动模式执行清零
-                if (isAbsoluteMode)
-                {
-                    // 绝对运动模式：直接移动到0位置
-                    zmcControl.SingleMoveAbs(0, 0);  // Z1 轴
-                    zmcControl.SingleMoveAbs(1, 0);  // Z2 轴
-                    zmcControl.SingleMoveAbs(2, 0);  // Z3 轴
-                    zmcControl.SingleMoveAbs(3, 0);  // X 轴
-                }
-                else
-                {
-                    // 相对运动模式：读取当前位置并计算反向移动距离
-                    float currentZ1 = zmcControl.GetDpos(0);
-                    float currentZ2 = zmcControl.GetDpos(1);
-                    float currentZ3 = zmcControl.GetDpos(2);
-                    float currentX = zmcControl.GetDpos(3);
-
-                    zmcControl.SingleMoveRel(0, -currentZ1);  // Z1 轴反向移动到0
-                    zmcControl.SingleMoveRel(1, -currentZ2);  // Z2 轴反向移动到0
-                    zmcControl.SingleMoveRel(2, -currentZ3);  // Z3 轴反向移动到0
-                    zmcControl.SingleMoveRel(3, -currentX);   // X 轴反向移动到0
+                    if (isAbsoluteMode)
+                        zmcControl.SingleMoveAbs(axis, 0);
+                    else
+                        zmcControl.SingleMove(axis, -zmcControl.GetDpos(axis));
                 }
 
                 lblStatus.Text = "清零中...";

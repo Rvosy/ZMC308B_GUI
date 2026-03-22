@@ -650,6 +650,5 @@ namespace ZMC
         private System.Windows.Forms.TextBox txtStateZ2;
         private System.Windows.Forms.TextBox txtStateZ3;
         private System.Windows.Forms.TextBox txtStateX;
-        private bool isAbsoluteMode = true; // 默认绝对运动模式
     }
 }
